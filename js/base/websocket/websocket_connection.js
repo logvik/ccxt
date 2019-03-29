@@ -86,7 +86,6 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
         if (this.client.ws == null){
             return false;
         }
-        return (this.client.ws.readyState == this.client.ws.OPEN) || 
-            (this.client.ws.readyState == this.client.ws.CONNECTING);
+        return (this.client.ws.readyState == this.client.ws.OPEN);
     }
 };
