@@ -13,9 +13,37 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
         this.client = {
             ws: null,
             isClosing: false,
+            activityTimeout: 120 * 1000,
+            pongTimeout: 30 * 1000
         };
+        this._activityTimer = undefined;
     }
 
+    resetActivityCheck() {
+        if (this._activityTimer) {
+            clearTimeout(this._activityTimer);
+        }
+        if (this.client.isClosing) {
+            return;
+        }
+        var that = this;
+        // Send ping after inactivity
+        this._activityTimer = setTimeout(function() {
+            if (!that.client.isClosing){
+                if (that.options['verbose']){
+                    console.log("WsConnection: ping sent");
+                }
+                that.client.ws.ping();
+                // Wait for pong response
+                that._activityTimer = setTimeout(function() {
+                    if (!that.client.isClosing){
+                        that.client.ws.close();
+                    }
+                }, that.client.pongTimeout)
+            }
+        }, that.client.activityTimeout);
+    }
+    
     connect() {
         return new Promise ((resolve, reject) => {
             if ((this.client.ws != null) && (this.client.ws.readyState === this.client.ws.OPEN)) {
@@ -25,6 +53,8 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
             const client = {
                 ws: null,
                 isClosing: false,
+                activityTimeout: 120 * 1000,
+                pongTimeout: 30 * 1000
             };
             if (this.options.agent) {
                 client.ws = new WebSocket(this.options.url, { agent: this.options.agent });
@@ -36,7 +66,8 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
                 if (this.options['wait-after-connect']) {
                     await sleep(this.options['wait-after-connect']);
                 }
-                this.emit ('open');
+                this.emit ('open')
+                this.resetActivityCheck(); 
                 resolve();
             });
 
@@ -54,11 +85,19 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
                 reject('closing');
             });
         
+            client.ws.on('pong', () => {
+                if (!client.isClosing) {
+                    this.emit('pong');
+                }
+                this.resetActivityCheck ();
+                resolve();
+            });
+            
             client.ws.on('message', async (data) => {
                 if (this.options['verbose']){
                     console.log("WebsocketConnection: "+data);
                 }
-
+                
                 if (!client.isClosing) {
                     this.emit('message', data);
                 }
