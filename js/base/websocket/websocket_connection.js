@@ -29,7 +29,7 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
         var that = this;
         // Send ping after inactivity
         this._activityTimer = setTimeout(function() {
-            if (!that.client.isClosing){
+            if (!that.client.isClosing && that.isActive()) {
                 if (that.options['verbose']){
                     console.log("WsConnection: ping sent");
                 }
