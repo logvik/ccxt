@@ -36,7 +36,7 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
                 that.client.ws.ping();
                 // Wait for pong response
                 that._activityTimer = setTimeout(function() {
-                    if (!that.client.isClosing){
+                    if (!that.client.isClosing && that.isActive()){
                         that.client.ws.close();
                     }
                 }, that.client.pongTimeout)
