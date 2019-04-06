@@ -1460,7 +1460,7 @@ module.exports = class binance extends Exchange {
     }
 
     _websocketUnsubscribe (contextId, event, symbol, nonce, params = {}) {
-        if (event !== 'ob' && event !== 'trade') {
+        if (event !== 'ob' && event !== 'trade' && event !== 'ohlcv' && event !== 'ticker') {
             throw new NotSupported ('unsubscribe ' + event + '(' + symbol + ') not supported for exchange ' + this.id);
         }
         let nonceStr = nonce.toString ();
