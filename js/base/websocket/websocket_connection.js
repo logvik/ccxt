@@ -94,6 +94,7 @@ module.exports = class WebsocketConnection extends WebsocketBaseConnection {
             });
             
             client.ws.on('message', async (data) => {
+                this.resetActivityCheck ();
                 if (this.options['verbose']){
                     console.log("WebsocketConnection: "+data);
                 }
